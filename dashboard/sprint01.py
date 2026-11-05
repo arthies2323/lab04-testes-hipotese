@@ -25,11 +25,11 @@ st.header('1. Cenário')
 st.markdown((ROOT / 'docs' / 'cenario_sprint01.md').read_text(encoding='utf-8'))
 st.dataframe(cal.rename(columns={'median':'Mediana (h)', 'sigma':'Desvio dos logaritmos'}))
 st.header('2. Os dados — G1')
+desc = sprint01.describe(real)
+st.dataframe(desc.rename(columns=sprint01_plots.DESC_LABELS))
 st.plotly_chart(sprint01_plots.g1(real, sample), width='stretch')
-st.markdown('A simulação usa uma lognormal por grupo, com a mediana e o desvio dos logaritmos '
-            'calibrados na amostra real acima. G1 apresenta todas as observações, sem cortar ou '
-            'acumular artificialmente a cauda; os mesmos dados simulados alimentam os dois testes. '
-            'As diferenças visuais entre amostras pequenas são esperadas e não demonstram causalidade.')
+st.markdown(sprint01.shape_text(desc) + ' G1 apresenta todas as observações, sem cortar a cauda, '
+            'e os mesmos dados simulados alimentam os dois testes.')
 st.download_button('Baixar conjunto simulado', sample.to_csv(index=False), 'exemplo_simulado.csv', 'text/csv')
 st.header('3. Como os testes funcionam — G2')
 @st.cache_data
