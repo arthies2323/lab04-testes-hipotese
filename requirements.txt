@@ -1,7 +1,7 @@
-﻿numpy
-scipy
+numpy
+scipy>=1.11
 pandas
 matplotlib
 plotly
-streamlit
+streamlit>=1.49
 pytest
