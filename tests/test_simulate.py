@@ -1,17 +1,19 @@
-﻿from src import simulate
+import numpy as np
+
+from src import simulate
 
 
 def test_lognormal_median_close():
     rng = simulate.make_rng(1)
-    x = simulate.lognormal_group(rng, 100_000, 10.0, 1.0)
-    assert abs(float(__import__("numpy").median(x)) - 10.0) < 0.3
+    a, _ = simulate.generate(rng, "lognormal", 100_000, 0.0, 1, 10.0, 1.0)
+    assert abs(float(np.median(a)) - 10.0) < 0.3
 
 
 def test_run_tests_returns_valid_pvalues():
     rng = simulate.make_rng(1)
-    a = simulate.lognormal_group(rng, 30, 10, 1)
-    b = simulate.lognormal_group(rng, 30, 10, 1)
-    assert all(0 <= p <= 1 for p in simulate.run_tests(a, b))
+    a, b = simulate.generate(rng, "lognormal", 30, 0.0, 5, 10.0, 1.0)
+    pw, pm = simulate.run_tests(a, b)
+    assert pw.shape == (5,) and ((0 <= pw) & (pw <= 1)).all() and ((0 <= pm) & (pm <= 1)).all()
 
 
 def test_type1_error_mannwhitney_near_5pct():
