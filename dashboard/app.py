@@ -9,8 +9,9 @@ os.chdir(ROOT)
 
 import pandas as pd
 import streamlit as st
+from scipy import stats
 
-from src import config, plots, simulate
+from src import config, plots, simulate, sprint01, sprint01_plots
 
 st.set_page_config(page_title="Lab04 — Testes de hipótese", layout="wide")
 real = simulate.load_real()
@@ -38,23 +39,26 @@ Amostra aleatória (semente 42) de **{cal['com_bot']['n']} PRs com bot e {cal['s
 """)
 
 st.header("2. Os dados")
-st.plotly_chart(plots.g1(real, med, sig), width="stretch")
-st.markdown(f"""
-Os dados reais são fortemente assimétricos à direita: mediana de {cal['com_bot']['median']:.1f} h (com bot) e
-{cal['sem_bot']['median']:.1f} h (sem bot), com cauda longa até centenas de horas. O σ dos logaritmos é ≈ {sig:.2f} nos
-dois grupos. Por isso a simulação usa uma **lognormal com mediana {med:.1f} h e σ = {sig:.2f}**, que reproduz essa
-assimetria. O efeito é aplicado como deslocamento no log, medido em desvios-padrão (d).
+desc = sprint01.describe(real)
+sample = sprint01.example(real)
+st.dataframe(desc.rename(columns=sprint01_plots.DESC_LABELS), width="stretch")
+st.plotly_chart(sprint01_plots.g1(real, sample), width="stretch")
+st.markdown(sprint01.shape_text(desc) + f"""
+Nas simulações Q1–Q3, H₀ verdadeira exige a mesma distribuição nos dois grupos: usamos a **lognormal comum com
+mediana {med:.1f} h e σ = {sig:.2f}** e aplicamos o efeito como deslocamento no log, medido em desvios-padrão (d).
 """)
 
 st.header("3. Como os testes funcionam")
-fig2, t, u = plots.g2(med, sig)
-st.plotly_chart(fig2, width="stretch")
+_, t, u, z = sprint01.analyze(sample)
+st.plotly_chart(sprint01_plots.g2(real, sample), width="stretch")
+crit_t, crit_z = stats.t.ppf(1 - config.ALPHA / 2, t.df), stats.norm.ppf(1 - config.ALPHA / 2)
 st.markdown(f"""
 **Welch** compara **médias** (estatística t, sem supor variâncias iguais); **Mann-Whitney** compara **postos**
-(probabilidade de um valor de um grupo superar o do outro). O gráfico mostra a distribuição de t quando H₀ é verdadeira;
-a região vermelha (|t| > 2,0) é onde rejeitamos H₀ com α = 5%, nas duas caudas por ser bicaudal. No conjunto simulado de
-exemplo, t = {t.statistic:.2f} e **p = {t.pvalue:.3f}** (Mann-Whitney: p = {u.pvalue:.3f}): é a probabilidade, sob H₀, de ver
-uma estatística tão extrema quanto essa. Não é a probabilidade de H₀ ser verdadeira.
+(probabilidade de um valor de um grupo superar o do outro). Cada painel mostra a distribuição da estatística quando H₀ é
+verdadeira; a região vermelha (|t| > {crit_t:.2f} com {t.df:.1f} gl de Satterthwaite, |z| > {crit_z:.2f} para U) é onde
+rejeitamos H₀ com α = 5%, nas duas caudas por ser bicaudal. No conjunto simulado do G1, t = {t.statistic:.2f} com
+**p = {t.pvalue:.3f}** e U = {u.statistic:.0f} (|z| = {z:.2f}) com **p = {u.pvalue:.3f}**: a área cinza é a probabilidade,
+sob H₀, de uma estatística tão ou mais extrema que a observada. Não é a probabilidade de H₀ ser verdadeira.
 """)
 
 st.header("4. Erro tipo I")

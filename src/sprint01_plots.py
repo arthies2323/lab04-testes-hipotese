@@ -7,6 +7,10 @@ from scipy import stats
 from . import config, sprint01
 
 COLORS = {"com_bot": "#2ca02c", "sem_bot": "#7f7f7f"}
+DESC_LABELS = {"media": "Média (h)", "mediana": "Mediana (h)", "dp": "Desvio-padrão (h)",
+               "assimetria": "Assimetria", "minimo": "Mínimo (h)", "maximo": "Máximo (h)",
+               "outliers": "Outliers (1,5·IQR)", "shapiro_p_horas": "Shapiro-Wilk p (horas)",
+               "shapiro_p_log": "Shapiro-Wilk p (log das horas)"}
 
 
 def g1(real, sample):

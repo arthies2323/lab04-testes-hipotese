@@ -1,5 +1,6 @@
 """LAB04S01: um exemplo reproduzível, sem executar Q1–Q3."""
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -34,6 +35,38 @@ def calibrate(real):
         rows.append(dict(grupo=group, n=len(x), median=float(np.median(x)),
                          sigma=float(np.log(x).std(ddof=1))))
     return pd.DataFrame(rows).set_index("grupo")
+
+
+def describe(real):
+    """Forma da amostra real por grupo; é a evidência para simular com lognormal."""
+    rows = []
+    for group in GROUPS:
+        x = real.loc[real.grupo == group, "horas_ate_merge"].to_numpy()
+        q1, q3 = np.percentile(x, [25, 75])
+        fence = 1.5 * (q3 - q1)
+        shapiro = lambda v: float(stats.shapiro(v).pvalue) if len(v) >= 3 else np.nan
+        rows.append(dict(grupo=group, n=len(x), media=float(x.mean()), mediana=float(np.median(x)),
+                         dp=float(x.std(ddof=1)), assimetria=float(stats.skew(x, bias=False)),
+                         minimo=float(x.min()), maximo=float(x.max()),
+                         outliers=int(((x < q1 - fence) | (x > q3 + fence)).sum()),
+                         shapiro_p_horas=shapiro(x), shapiro_p_log=shapiro(np.log(x))))
+    return pd.DataFrame(rows).set_index("grupo")
+
+
+def shape_text(desc):
+    """Texto do G1: como são os dados reais e por que a simulação usa a lognormal."""
+    a, b = (desc.loc[g] for g in GROUPS)
+    fits = (desc.shapiro_p_horas < config.ALPHA).all() and (desc.shapiro_p_log >= config.ALPHA).all()
+    text = (f"Média × mediana: {a.media:.1f} h × {a.mediana:.1f} h com bot e {b.media:.1f} h × {b.mediana:.1f} h "
+            f"sem bot; assimetria de {a.assimetria:.2f} e {b.assimetria:.2f}, máximo de {desc.maximo.max():.1f} h e "
+            f"{int(desc.outliers.sum())} outliers pela regra de 1,5·IQR. "
+            f"O Shapiro-Wilk dá p = {a.shapiro_p_horas:.2g} e {b.shapiro_p_horas:.2g} para as horas e "
+            f"p = {a.shapiro_p_log:.2g} e {b.shapiro_p_log:.2g} para o log das horas. ")
+    if fits:
+        return text + (f"Como a normalidade é rejeitada nas horas e não no log (α = {config.ALPHA}), cada grupo é "
+                       "simulado como lognormal, com a mediana e o desvio dos logaritmos da calibração; com "
+                       f"{int(desc.n.min())} PRs por grupo isso indica compatibilidade, não prova que o modelo é exato.")
+    return text + "Esse padrão não sustenta claramente a lognormal, e a calibração deve ser revista."
 
 
 def example(real, seed=config.SEED):
@@ -80,6 +113,7 @@ def export(output, real=None):
     sample.to_csv(output / "exemplo_simulado.csv", index=False)
     table.to_csv(output / "testes_exemplo.csv", index=False)
     calibrate(real).to_csv(output / "calibracao.csv")
+    describe(real).to_csv(output / "descritivas.csv")
     from .sprint01_plots import g1, g2
     g1(real, sample).write_html(output / "G1.html", include_plotlyjs=True)
     g2(real, sample).write_html(output / "G2.html", include_plotlyjs=True)
@@ -88,6 +122,8 @@ def export(output, real=None):
 
 
 if __name__ == "__main__":
+    # No Windows a saída redirecionada usa cp1252, que não codifica "α" das interpretações.
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "output" / "sprint01")
     export(parser.parse_args().output)

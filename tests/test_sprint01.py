@@ -1,3 +1,6 @@
+import os
+import subprocess
+import sys
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -18,6 +21,20 @@ def test_calibration_and_example_match_source():
         assert cal.loc[g, 'sigma'] == pytest.approx(np.std(np.log(x), ddof=1))
     assert (sample.horas_ate_merge > 0).all()
     assert not sample.equals(sprint01.example(real, seed=43))
+
+
+def test_describe_justifies_lognormal():
+    real = sprint01.load_real()
+    desc = sprint01.describe(real)
+    for g in sprint01.GROUPS:
+        x = real.loc[real.grupo == g, 'horas_ate_merge'].to_numpy()
+        assert desc.loc[g, 'media'] == pytest.approx(x.mean())
+        assert desc.loc[g, 'assimetria'] == pytest.approx(stats.skew(x, bias=False))
+        assert desc.loc[g, 'shapiro_p_log'] == pytest.approx(stats.shapiro(np.log(x)).pvalue)
+    # A amostra real rejeita normalidade nas horas e não no log: é o que sustenta a lognormal.
+    assert (desc.shapiro_p_horas < .05).all() and (desc.shapiro_p_log >= .05).all()
+    assert 'simulado como lognormal' in sprint01.shape_text(desc)
+    assert 'revista' in sprint01.shape_text(desc.assign(shapiro_p_log=.01))
 
 
 def test_statistics_effects_and_reference_areas():
@@ -69,10 +86,18 @@ def test_export_is_reproducible_and_independent_of_cwd(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     sprint01.export(tmp_path / 'a')
     sprint01.export(tmp_path / 'b')
-    for name in ('exemplo_simulado.csv','testes_exemplo.csv','calibracao.csv'):
+    for name in ('exemplo_simulado.csv','testes_exemplo.csv','calibracao.csv','descritivas.csv'):
         assert (tmp_path/'a'/name).read_bytes() == (tmp_path/'b'/name).read_bytes()
     assert (tmp_path/'a'/'G1.html').exists()
     assert (tmp_path/'a'/'G2.html').exists()
+
+
+def test_cli_runs_with_non_utf8_stdout(tmp_path):
+    env = {**os.environ, 'PYTHONIOENCODING': 'cp1252'}
+    run = subprocess.run([sys.executable, '-m', 'src.sprint01', '--output', str(tmp_path)],
+                         cwd=sprint01.ROOT, env=env, capture_output=True)
+    assert run.returncode == 0, run.stderr.decode(errors='replace')
+    assert 'α=0.05' in run.stdout.decode('utf-8')
 
 
 @pytest.mark.parametrize('value', [0,-1,np.nan,np.inf])
@@ -99,3 +124,22 @@ def test_dashboard_without_s02(monkeypatch):
     app = AppTest.from_file(str(sprint01.ROOT/'dashboard'/'sprint01.py')).run(timeout=30)
     assert not app.exception
     assert [x.value for x in app.header] == ['1. Cenário','2. Os dados — G1','3. Como os testes funcionam — G2']
+
+
+def test_full_dashboard_uses_s01_g1_g2(monkeypatch):
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.chdir(sprint01.ROOT)  # app.py faz os.chdir; restaurado ao fim do teste
+    calls = []
+    for name in ('g1', 'g2'):
+        original = getattr(sprint01_plots, name)
+        def spy(real, sample, *args, _name=name, _original=original, **kwargs):
+            calls.append((_name, sample))
+            return _original(real, sample, *args, **kwargs)
+        monkeypatch.setattr(sprint01_plots, name, spy)
+    app = AppTest.from_file(str(sprint01.ROOT/'dashboard'/'app.py')).run(timeout=60)
+    assert not app.exception
+    assert [name for name, _ in calls] == ['g1', 'g2']
+    expected = sprint01.example(sprint01.load_real())
+    for _, sample in calls:
+        pd.testing.assert_frame_equal(sample, expected)
+    assert len(app.header) == 7
