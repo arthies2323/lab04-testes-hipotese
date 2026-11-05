@@ -17,7 +17,7 @@ python -m src.sprint01
 ```
 
 Arquivos em `output/sprint01/`: `exemplo_simulado.csv`, `testes_exemplo.csv`,
-`calibracao.csv`, `G1.html` e `G2.html`. Semente 42; o mesmo exemplo é usado
+`calibracao.csv`, `descritivas.csv`, `G1.html` e `G2.html`. Semente 42; o mesmo exemplo é usado
 nos testes e nos gráficos. A distribuição nula ilustrativa do G2 usa semente 43.
 A entrada S01 não lê `data/results.csv` nem executa Q1–Q3.
 O cenário e a expectativa anterior à execução estão em `docs/cenario_sprint01.md`.
@@ -28,6 +28,11 @@ reaberta pois usava gl=2n−2 no Welch e não mostrava Mann-Whitney).
 A issue adicional #17 cobre a entrada isolada da S01 e a integração de G1/G2.
 Os módulos e resultados já existentes das outras sprints foram preservados;
 os comandos abaixo descrevem a versão anterior completa e não são necessários à S01.
+
+A issue #20 justifica a lognormal com estatísticas descritivas dos dados reais
+(assimetria, outliers e Shapiro-Wilk nas horas e no log das horas, em `descritivas.csv`
+e na seção 2) e faz o dashboard completo (`dashboard/app.py`) usar o mesmo G1/G2 e o
+mesmo exemplo da S01.
 
 ## Como rodar (comando único após instalar)
 ```

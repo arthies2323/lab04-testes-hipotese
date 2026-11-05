@@ -1,67 +1,14 @@
-"""Figuras G1-G4 (Plotly) e tabela de dados reais. Cor fixa por teste."""
+"""Figuras G3-G4 (Plotly) e tabela de dados reais. Cor fixa por teste.
+G1 e G2 ficam em sprint01_plots, usados pelos dois dashboards."""
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import stats
 
-from . import config, simulate
+from . import config
 
 C = config.COLORS
-GRP = {"com_bot": "#2ca02c", "sem_bot": "#7f7f7f"}
-
-
-def g1(real, med, sig, seed=config.SEED):
-    rng = simulate.make_rng(seed)
-    a, b = simulate.generate(rng, "lognormal", 5000, 0.0, 1, med, sig)
-    sim = {"com_bot": a[0], "sem_bot": b[0]}
-    fig = make_subplots(1, 2, subplot_titles=("Dados reais (n=30 por grupo)", "Dados simulados (lognormal, n=5000 por grupo)"))
-    for g in ("com_bot", "sem_bot"):
-        fig.add_histogram(x=real[real.grupo == g].horas_ate_merge, name=g, marker_color=GRP[g], opacity=.65,
-                          xbins=dict(size=25), legendgroup=g, row=1, col=1)
-        fig.add_histogram(x=np.clip(sim[g], 0, 500), name=g, marker_color=GRP[g], opacity=.65,
-                          xbins=dict(size=25), legendgroup=g, showlegend=False, row=1, col=2)
-    fig.update_layout(barmode="overlay", title="G1 — Tempo até o merge: real × simulado (simulado truncado em 500 h)")
-    fig.update_xaxes(title_text="Tempo até o merge (horas)")
-    fig.update_yaxes(title_text="Nº de PRs")
-    return fig
-
-
-def g2_example(med, sig, n=config.N_PER_GROUP, seed=7):
-    rng = simulate.make_rng(seed)
-    a, b = simulate.generate(rng, "lognormal", n, 0.0, 1, med, sig)
-    a, b = a[0], b[0]
-    t = stats.ttest_ind(a, b, equal_var=False)
-    u = stats.mannwhitneyu(a, b, alternative="two-sided")
-    return a, b, t, u
-
-
-def g2(med, sig, n=config.N_PER_GROUP):
-    rng = simulate.make_rng(config.SEED)
-    A, B = simulate.generate(rng, "lognormal", n, 0.0, config.N_SIM, med, sig)
-    ts = stats.ttest_ind(A, B, equal_var=False, axis=-1).statistic
-    a, b, t, u = g2_example(med, sig, n)
-    df = 2 * n - 2
-    crit = stats.t.ppf(1 - config.ALPHA / 2, df)
-    x = np.linspace(-5, 5, 600)
-    pdf = stats.t.pdf(x, df)
-    fig = go.Figure()
-    fig.add_histogram(x=ts, histnorm="probability density", nbinsx=80, name="Estatística t simulada (H0)",
-                      marker_color="rgba(31,119,180,.35)", xbins=dict(start=-5, end=5, size=.125))
-    fig.add_scatter(x=x, y=pdf, name=f"t de Student teórica (gl≈{df})", line=dict(color=C["Welch"], width=2))
-    for sgn, lab in ((-1, "Região de rejeição (α=0,05)"), (1, None)):
-        m = (x <= -crit) if sgn < 0 else (x >= crit)
-        fig.add_scatter(x=x[m], y=pdf[m], fill="tozeroy", mode="none", fillcolor="rgba(214,39,40,.45)",
-                        name=lab or "", showlegend=lab is not None)
-    tt = float(t.statistic)
-    for sgn in (-1, 1):
-        m = (x <= -abs(tt)) if sgn < 0 else (x >= abs(tt))
-        fig.add_scatter(x=x[m], y=pdf[m], fill="tozeroy", mode="none", fillcolor="rgba(0,0,0,.6)",
-                        name=f"Área do p-valor do exemplo = {t.pvalue:.3f}", showlegend=sgn > 0)
-    fig.add_vline(x=tt, line_dash="dash", annotation_text=f"t observado = {tt:.2f}")
-    fig.update_layout(title="G2 — Distribuição da estatística t de Welch sob H0 (dados lognormais, n=30 por grupo)",
-                      xaxis_title="Estatística t (adimensional)", yaxis_title="Densidade")
-    return fig, t, u
 
 
 def g3(res):
