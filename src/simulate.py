@@ -63,21 +63,30 @@ def run_tests(a, b):
     return np.asarray(p_w), np.asarray(p_m)
 
 
-def rejection_rates(rng, kind, n, d, size, median, sigma, alpha=config.ALPHA):
+def rejection_counts(rng, kind, n, d, size, median, sigma, alpha=config.ALPHA):
+    """Conta rejeições dos dois testes no mesmo conjunto de réplicas."""
     a, b = generate(rng, kind, n, d, size, median, sigma)
     pw, pm = run_tests(a, b)
-    return float((pw < alpha).mean()), float((pm < alpha).mean())
+    return int(np.count_nonzero(pw < alpha)), int(np.count_nonzero(pm < alpha))
+
+
+def rejection_rates(rng, kind, n, d, size, median, sigma, alpha=config.ALPHA):
+    counts = rejection_counts(rng, kind, n, d, size, median, sigma, alpha)
+    return tuple(count / size for count in counts)
 
 
 def run_all(size=config.N_SIM, seed=config.SEED):
+    if size < 1:
+        raise ValueError("O número de repetições deve ser positivo.")
     rng = make_rng(seed)
     med, sig = pooled_params()
     rows = []
     for sit, spec in SITUATIONS.items():
         for d in config.EFFECTS:
-            w, m = rejection_rates(rng, spec["kind"], spec["n"], d, size, med, sig)
-            rows += [dict(situacao=sit, d=d, teste="Welch", taxa_rejeicao=w),
-                     dict(situacao=sit, d=d, teste="Mann-Whitney", taxa_rejeicao=m)]
+            counts = rejection_counts(rng, spec["kind"], spec["n"], d, size, med, sig)
+            for test, count in zip(config.COLORS, counts):
+                rows.append(dict(situacao=sit, d=d, teste=test, taxa_rejeicao=count / size,
+                                 rejeicoes=count, repeticoes=size, alpha=config.ALPHA, semente=seed))
     return pd.DataFrame(rows)
 
 
