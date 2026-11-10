@@ -17,9 +17,19 @@ st.set_page_config(page_title="Lab04 — Testes de hipótese", layout="wide")
 real = simulate.load_real()
 cal = simulate.calibrate(real)
 med, sig = simulate.pooled_params(real)
-if not Path(config.RESULTS_CSV).exists():
-    simulate.run_all().to_csv(config.RESULTS_CSV, index=False)
-res = pd.read_csv(config.RESULTS_CSV)
+@st.cache_data
+def load_simulation_results(path, revision):
+    path = Path(path)
+    if path.exists():
+        saved = pd.read_csv(path)
+        if {"rejeicoes", "repeticoes", "alpha"}.issubset(saved.columns):
+            return saved
+    return simulate.run_all()
+
+
+results_path = Path(config.RESULTS_CSV)
+revision = results_path.stat().st_mtime_ns if results_path.exists() else None
+res = load_simulation_results(str(results_path), revision)
 piv = res.pivot_table(index=["situacao", "d"], columns="teste", values="taxa_rejeicao")
 
 st.title("Testes de hipótese por dentro: Welch × Mann-Whitney")
@@ -63,14 +73,21 @@ sob H₀, de uma estatística tão ou mais extrema que a observada. Não é a pr
 
 st.header("4. Erro tipo I")
 st.plotly_chart(plots.g3(res), width="stretch")
-r0 = piv.xs(0.0, level="d")
-st.markdown(f"""
-Com H₀ verdadeira o esperado é ≈ 5% (±0,4 p.p. com 10.000 simulações). O **Mann-Whitney ficou em 4,7–5,1%** em todas as
-situações. O **Welch ficou conservador** nos dados assimétricos: {r0['Welch'].min()*100:.1f}% com n=8,
-{r0.loc['Lognormal com outliers (n=30)','Welch']*100:.1f}% com outliers e
-{r0.loc['Lognormal assimétrica (n=30)','Welch']*100:.1f}% só pela assimetria. Só com dados normais ele fica em
-{r0.loc['Normal, bem comportada (n=30)','Welch']*100:.1f}%.
-""")
+null = plots.type1_summary(res)
+alpha = null.alpha.iloc[0]
+summary = []
+for test, rows in null.groupby("teste", sort=False):
+    below = rows.loc[rows.ic_sup.lt(alpha), "situacao"].tolist()
+    above = rows.loc[rows.ic_inf.gt(alpha), "situacao"].tolist()
+    departures = [f"abaixo em {', '.join(below)}"] if below else []
+    if above:
+        departures.append(f"acima em {', '.join(above)}")
+    summary.append(f"**{test}**: " + (" e ".join(departures) if departures else
+                                    "todos os intervalos incluem o nível nominal"))
+st.markdown(f"Sob H₀, a linha em {alpha:.0%} é o nível nominal e as barras de erro "
+            "mostram intervalos pontuais de Wilson de 95% da simulação. "
+            + ". ".join(summary) + ". "
+            "Os intervalos quantificam a variação entre réplicas do modelo simulado.")
 
 st.header("5. Poder")
 st.plotly_chart(plots.g4(res), width="stretch")
