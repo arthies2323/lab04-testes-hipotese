@@ -11,14 +11,37 @@ from . import config
 C = config.COLORS
 
 
+def type1_summary(res):
+    """Estimativas sob H0 e intervalos pontuais de Monte Carlo."""
+    null = res.loc[res.d.eq(0)].copy()
+    intervals = [
+        stats.binomtest(int(row.rejeicoes), int(row.repeticoes))
+        .proportion_ci(confidence_level=0.95, method="wilson")
+        for row in null.itertuples()
+    ]
+    return null.assign(ic_inf=[ci.low for ci in intervals],
+                       ic_sup=[ci.high for ci in intervals])
+
+
 def g3(res):
-    r = res[res.d == 0]
+    null = type1_summary(res)
+    alpha = null.alpha.iloc[0]
     fig = go.Figure()
-    for teste in C:
-        s = r[r.teste == teste]
-        fig.add_bar(x=s.situacao, y=s.taxa_rejeicao * 100, name=teste, marker_color=C[teste])
-    fig.add_hline(y=5, line_dash="dash", line_color="black", annotation_text="α = 5%")
-    fig.update_layout(barmode="group", title="G3 — Erro tipo I por situação simulada (10.000 simulações, H0 verdadeira)",
+    for teste, color in C.items():
+        s = null.loc[null.teste.eq(teste)]
+        fig.add_bar(
+            x=s.situacao, y=100 * s.taxa_rejeicao, name=teste, marker_color=color,
+            error_y=dict(type="data", symmetric=False,
+                         array=100 * (s.ic_sup - s.taxa_rejeicao),
+                         arrayminus=100 * (s.taxa_rejeicao - s.ic_inf)),
+            customdata=s[["rejeicoes", "repeticoes", "ic_inf", "ic_sup"]].to_numpy(),
+            hovertemplate=("%{x}<br>Taxa: %{y:.2f}%<br>"
+                           "Rejeições: %{customdata[0]:.0f}/%{customdata[1]:.0f}<br>"
+                           "IC 95%: %{customdata[2]:.2%}–%{customdata[3]:.2%}<extra>%{fullData.name}</extra>"),
+        )
+    fig.add_hline(y=100 * alpha, line_dash="dash", line_color="black",
+                  annotation_text=f"Nível nominal ({alpha:.0%})")
+    fig.update_layout(barmode="group", title="G3 — Erro tipo I e incerteza de Monte Carlo",
                       xaxis_title="Situação simulada", yaxis_title="Rejeições de H0 (%)")
     return fig
 
