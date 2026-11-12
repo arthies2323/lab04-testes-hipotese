@@ -178,10 +178,24 @@ with st.expander("Limites da comparação de Q3"):
 st.header("6. Dados reais")
 tab = plots.real_table(real)
 st.dataframe(tab, hide_index=True, width="stretch")
+d_obs = plots.real_effect_g4_scale(real)
+ref_curve = res[res.situacao.eq(simulate.REFERENCE)]
+big = sens[sens.forma.eq(simulate.SHAPES["lognormal"]) & sens.n.eq(sens.n.max())]
+pw = {t: plots.power_at(ref_curve[ref_curve.teste.eq(t)], d_obs) for t in config.COLORS}
+pw_big = {t: plots.power_at(big[big.teste.eq(t)], d_obs) for t in config.COLORS}
+decisions = set(tab["Conclusão"])
+agree = (f"Os dois testes chegam à mesma decisão (**{decisions.pop()}**)" if len(decisions) == 1
+         else "Os testes chegam a decisões **diferentes**")
+med_com, med_sem = desc.loc["com_bot", "mediana"], desc.loc["sem_bot", "mediana"]
 st.markdown(f"""
-Os dois testes concordam: **não rejeitam H₀** (Welch p = {tab.iloc[0]['p-valor']}, Mann-Whitney p = {tab.iloc[1]['p-valor']}).
-O efeito observado é pequeno (d ≈ 0,24; bisserial ≈ 0,08). Com n=30 por grupo o poder para um efeito desse tamanho é baixo
-(≈ 7–11% no G4, d = 0,2), então o resultado **não prova ausência de efeito**: a amostra é pequena demais para detectá-lo.
+{agree} (Welch p = {tab.iloc[0]['p-valor']}, Mann-Whitney p = {tab.iloc[1]['p-valor']}). Na prática, a mediana com bot é
+{med_com / med_sem:.2f} vezes a sem bot ({med_com - med_sem:+.1f} h), pouco diante da dispersão dos tempos (DP de
+{desc.dp.min():.0f} a {desc.dp.max():.0f} h). O d de Cohen da tabela está em horas e não se lê no eixo do G4: na escala do G4
+(diferença das médias do log, em desvios-padrão do log) o efeito observado é **d = {d_obs:.2f}**, para o qual a curva da
+referência com n = 30 dá poder de ≈ {pw['Welch']:.0%} (Welch) e ≈ {pw['Mann-Whitney']:.0%} (Mann-Whitney). Mesmo com
+{big.n.max()} PRs por grupo o poder ficaria em ≈ {pw_big['Welch']:.0%} e ≈ {pw_big['Mann-Whitney']:.0%}, e a aproximação
+normal indica ≈ {plots.n_for_power(d_obs)} PRs por grupo para 80%: o resultado **não prova ausência de efeito**, só mostra que
+a amostra é pequena demais para detectar um efeito desse tamanho.
 """)
 
 st.header("7. Conclusão")

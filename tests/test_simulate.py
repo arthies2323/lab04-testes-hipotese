@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 from src import simulate
@@ -180,3 +181,20 @@ def test_q3_comparison_and_readings():
     assert len(fig.data) == len(simulate.SHAPES) * len(config.COLORS) * 2
     assert {t.line.color for t in fig.data} == set(config.COLORS.values())
     assert len(plots.sample_size_reading(sens, 0.6)) == len(simulate.SHAPES)
+
+
+def test_real_effect_is_read_on_g4_scale():
+    import pandas as pd
+    from scipy import stats
+    from src import config, plots
+    real = simulate.load_real()
+    d = plots.real_effect_g4_scale(real)
+    a, b = (np.log(real[real.grupo.eq(g)].horas_ate_merge) for g in ("com_bot", "sem_bot"))
+    assert d == pytest.approx((a.mean() - b.mean()) / np.sqrt((a.var() + b.var()) / 2))
+    _, sig = simulate.pooled_params(real)
+    assert np.sqrt((a.var() + b.var()) / 2) == pytest.approx(sig)
+    curve = pd.DataFrame(dict(d=[0.0, 0.2, 0.4], taxa_rejeicao=[0.05, 0.15, 0.45]))
+    assert plots.power_at(curve, -0.1) == pytest.approx(0.10)
+    n = plots.n_for_power(0.5)
+    z = stats.norm.ppf(1 - config.ALPHA / 2) + stats.norm.ppf(0.8)
+    assert n == int(np.ceil(2 * (z / 0.5) ** 2)) == 63
