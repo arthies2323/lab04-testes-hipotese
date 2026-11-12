@@ -72,6 +72,25 @@ sob H₀, de uma estatística tão ou mais extrema que a observada. Não é a pr
 """)
 
 st.header("4. Erro tipo I")
+st.subheader("Situações simuladas (Q1–Q3)")
+st.table(simulate.scenario_table(med, sig).rename(columns={
+    "situacao": "Situação", "violacao": "Pressuposto do Welch violado",
+    "alterado": "Parâmetro alterado (vs. referência)", "fixos": "Parâmetros fixos"}).set_index("Situação"))
+checks = simulate.scenario_checks(med, sig, size=4_000)
+ref_skew = checks.set_index("situacao").loc[simulate.REFERENCE, "assimetria_tipica"]
+st.dataframe(checks.rename(columns={
+    "situacao": "Situação", "n": "n por grupo", "assimetria_tipica": "Assimetria típica de uma amostra",
+    "razao_medias_h0": "Média b ÷ média a (H₀)", "correlacao_grupos": "Correlação entre grupos"}).round(3),
+    hide_index=True, width="stretch")
+st.markdown(
+    f"Cada situação muda um único aspecto da referência **{simulate.REFERENCE}**; em todas, a grade de d, "
+    f"α = {config.ALPHA}, {f'{config.N_SIM:_}'.replace('_', '.')} réplicas e a semente {config.SEED} ficam fixas. "
+    "A conferência acima gera 4.000 réplicas sob H₀: a contaminação atinge os dois grupos igualmente (razão das "
+    f"médias entre {checks.razao_medias_h0.min():.2f} e {checks.razao_medias_h0.max():.2f}) e os grupos são "
+    f"independentes (|correlação| ≤ {checks.correlacao_grupos.abs().max():.3f}). A assimetria típica de uma amostra "
+    f"simulada da referência ({ref_skew:.2f}) é comparável à dos dados reais "
+    f"({desc.assimetria.min():.2f} e {desc.assimetria.max():.2f}).")
+st.subheader("G3 — Erro tipo I por situação")
 st.plotly_chart(plots.g3(res), width="stretch")
 null = plots.type1_summary(res)
 alpha = null.alpha.iloc[0]
