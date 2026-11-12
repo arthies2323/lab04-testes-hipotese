@@ -47,18 +47,48 @@ def g3(res):
 
 
 def g4(res):
+    """Curvas de poder por situação. Em d=0 a curva é o erro tipo I (referência em α)."""
     sits = list(res.situacao.unique())
-    fig = make_subplots(2, 2, subplot_titles=sits, shared_yaxes=True)
+    alpha = 100 * res.alpha.iloc[0] if "alpha" in res else 100 * config.ALPHA
+    fig = make_subplots(2, 2, subplot_titles=sits, shared_yaxes=True, vertical_spacing=0.16)
     for i, s in enumerate(sits):
+        r, c = i // 2 + 1, i % 2 + 1
         for teste in C:
-            d = res[(res.situacao == s) & (res.teste == teste)]
+            d = res[(res.situacao == s) & (res.teste == teste)].sort_values("d")
             fig.add_scatter(x=d.d, y=d.taxa_rejeicao * 100, mode="lines+markers", name=teste,
                             line=dict(color=C[teste]), legendgroup=teste, showlegend=i == 0,
-                            row=i // 2 + 1, col=i % 2 + 1)
+                            hovertemplate="d = %{x}<br>Rejeições: %{y:.1f}%<extra>" + teste + "</extra>",
+                            row=r, col=c)
+        fig.add_hline(y=alpha, line_dash="dash", line_color="black", row=r, col=c,
+                      annotation_text=f"α = {alpha:.0f}% (d = 0)" if i == 0 else None)
+        fig.add_hline(y=80, line_dash="dot", line_color="gray", row=r, col=c,
+                      annotation_text="80% de poder" if i == 0 else None)
     fig.update_xaxes(title_text="Tamanho do efeito d (desvios-padrão)")
-    fig.update_yaxes(title_text="Poder (% de rejeições)")
-    fig.update_layout(title="G4 — Curvas de poder: Welch × Mann-Whitney", height=650)
+    fig.update_yaxes(title_text="Rejeições de H0 (%)", range=[0, 100])
+    fig.update_layout(title="G4 — Curvas de poder: Welch × Mann-Whitney (Q2 e Q3)", autosize=True,
+                      height=700, legend=dict(orientation="h", y=-0.12))
     return fig
+
+
+def g4_reading(res, min_gap=0.02):
+    """Leitura derivada dos resultados: quem lidera em cada situação e onde a vantagem muda."""
+    out = []
+    for s, g in res[res.d > 0].groupby("situacao", sort=False):
+        w = g[g.teste == "Welch"].set_index("d").taxa_rejeicao
+        m = g[g.teste == "Mann-Whitney"].set_index("d").taxa_rejeicao
+        diff = (m - w)
+        lead = diff.map(lambda x: "Mann-Whitney" if x > min_gap else "Welch" if x < -min_gap else "empate")
+        d_max = diff.abs().idxmax()
+        txt = f"{s}: dif. máxima de {abs(diff[d_max])*100:.0f} p.p. a favor do "               f"{'Mann-Whitney' if diff[d_max] > 0 else 'Welch'} (d = {d_max:g})"
+        leaders = set(lead) - {"empate"}
+        if len(leaders) > 1:
+            txt += "; a vantagem muda de lado (" + ", ".join(f"d={d:g}: {l}" for d, l in lead.items()) + ")"
+        elif leaders:
+            txt += f"; {leaders.pop()} lidera, sem troca de lado"
+        else:
+            txt += "; empate prático (diferença abaixo de 2 p.p.)"
+        out.append(txt)
+    return out
 
 
 def real_table(real):
