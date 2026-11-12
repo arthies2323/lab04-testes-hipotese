@@ -56,6 +56,23 @@ def generate(rng, kind, n, d, size, median, sigma):
     return a, b
 
 
+def effect_scale_table(median, sigma, effects=None):
+    """Traduz d para as escalas originais (documenta Q2).
+
+    Normal: o grupo b é deslocado d*dp horas, com dp o desvio-padrão da normal equivalente.
+    Lognormal: o deslocamento é d*sigma na escala log, ou seja, a mediana de b é
+    exp(d*sigma) vezes a de a. Poder = taxa de rejeição quando d > 0 (H1 verdadeira)."""
+    effects = config.EFFECTS if effects is None else effects
+    mu = median * np.exp(sigma**2 / 2)
+    sd = mu * np.sqrt(np.exp(sigma**2) - 1)
+    return pd.DataFrame(dict(
+        d=effects,
+        normal_deslocamento_h=[d * sd for d in effects],
+        lognormal_deslocamento_log=[d * sigma for d in effects],
+        lognormal_razao_medianas=[float(np.exp(d * sigma)) for d in effects],
+    ))
+
+
 def run_tests(a, b):
     """p-valores bicaudais (Welch, Mann-Whitney); aceita 1D ou 2D (axis=-1)."""
     p_w = stats.ttest_ind(a, b, equal_var=False, axis=-1).pvalue

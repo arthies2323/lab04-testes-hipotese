@@ -36,3 +36,17 @@ def test_run_all_records_reproducible_rejection_counts():
     assert (results.alpha == config.ALPHA).all()
     assert results.rejeicoes.between(0, 100).all()
     np.testing.assert_allclose(results.taxa_rejeicao, results.rejeicoes / results.repeticoes)
+
+
+def test_effect_grid_starts_at_zero_and_increases():
+    t = simulate.effect_scale_table(27.0, 1.24)
+    assert len(t) >= 5 and t.d.iloc[0] == 0 and t.d.is_monotonic_increasing
+    assert t.lognormal_razao_medianas.iloc[0] == 1.0
+    assert t.normal_deslocamento_h.is_monotonic_increasing
+
+
+def test_g4_reading_covers_all_situations():
+    import pandas as pd
+    from src import plots
+    res = pd.read_csv("data/results.csv")
+    assert len(plots.g4_reading(res)) == res.situacao.nunique()
