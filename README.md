@@ -34,6 +34,20 @@ A issue #20 justifica a lognormal com estatísticas descritivas dos dados reais
 e na seção 2) e faz o dashboard completo (`dashboard/app.py`) usar o mesmo G1/G2 e o
 mesmo exemplo da S01.
 
+## LAB04S02 — Q1, Q2, Q3, G3 e G4 (#23–#28)
+
+`python -m src.simulate` gera `data/results.csv` (Q1–Q3: 4 situações × 6 valores de d × 2 testes,
+10.000 réplicas, semente 42, com as contagens de rejeição) e `data/sensitivity.csv` (Q3: normal,
+lognormal e lognormal com outliers com n = 8, 15, 30 e 60 por grupo). No dashboard completo, a
+seção 4 descreve e confere as situações simuladas e mostra o G3; a seção 5 mostra o G4, a comparação
+de Q3 com a referência e a sensibilidade ao tamanho da amostra, com os limites da comparação.
+
+## Entrega final — dashboard
+
+`streamlit run dashboard/app.py` abre as 7 seções na ordem pedida. Se os CSVs de `data/` não existirem,
+o dashboard os regenera com a mesma semente. A seção 6 lê o efeito real na escala do G4 (log, em σ)
+para estimar o poder com a amostra coletada e o n necessário para 80% de poder.
+
 ## Como rodar (comando único após instalar)
 ```
 python -m venv .venv
@@ -49,7 +63,7 @@ python -m pytest -p no:asyncio
 ```
 
 ## Estrutura
-- `src/collect.py` coleta dos dados reais · `src/simulate.py` simulação e testes · `src/plots.py` gráficos G1–G4 · `dashboard/app.py` dashboard
+- `src/collect.py` coleta dos dados reais · `src/simulate.py` simulação e testes · `src/sprint01_plots.py` G1 e G2 · `src/plots.py` G3, G4 e Q3 · `dashboard/app.py` dashboard completo · `dashboard/sprint01.py` só a S01
 - `data/prs.csv` dados reais · `data/results.csv` taxas de rejeição simuladas · `data/sensitivity.csv` Q3 por forma e n por grupo (8, 15, 30, 60)
 
 ## Links

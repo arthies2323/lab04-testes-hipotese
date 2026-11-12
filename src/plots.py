@@ -155,6 +155,24 @@ def sample_size_reading(sens, d_ref, target=0.8):
     return out
 
 
+def real_effect_g4_scale(real):
+    """d observado na escala do G4: diferença das médias do log, em desvios-padrão do log (combinado)."""
+    a, b = (np.log(real.loc[real.grupo.eq(g), "horas_ate_merge"].to_numpy()) for g in ("com_bot", "sem_bot"))
+    return float((a.mean() - b.mean()) / np.sqrt((a.var(ddof=1) + b.var(ddof=1)) / 2))
+
+
+def power_at(curve, d):
+    """Taxa de rejeição de uma curva (colunas d e taxa_rejeicao) interpolada linearmente em |d|."""
+    curve = curve.sort_values("d")
+    return float(np.interp(abs(d), curve.d, curve.taxa_rejeicao))
+
+
+def n_for_power(d, power=0.8, alpha=config.ALPHA):
+    """n por grupo para o poder desejado pela aproximação normal do teste t no log (bicaudal)."""
+    z = stats.norm.ppf(1 - alpha / 2) + stats.norm.ppf(power)
+    return int(np.ceil(2 * (z / d) ** 2))
+
+
 def real_table(real):
     a = real[real.grupo == "com_bot"].horas_ate_merge.values
     b = real[real.grupo == "sem_bot"].horas_ate_merge.values
