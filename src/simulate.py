@@ -151,7 +151,31 @@ def run_all(size=config.N_SIM, seed=config.SEED):
     return pd.DataFrame(rows)
 
 
+SHAPES = {"normal": "Normal", "lognormal": "Lognormal", "outliers": "Lognormal com outliers"}
+
+
+def run_sample_sizes(size=config.N_SIM, seed=config.SEED, sizes=None):
+    """Q3: cada forma (normal, lognormal, outliers) em cada n por grupo, com a mesma grade de d."""
+    if size < 1:
+        raise ValueError("O número de repetições deve ser positivo.")
+    sizes = config.SAMPLE_SIZES if sizes is None else sizes
+    rng = make_rng(seed)
+    med, sig = pooled_params()
+    rows = []
+    for kind, shape in SHAPES.items():
+        for n in sizes:
+            for d in config.EFFECTS:
+                counts = rejection_counts(rng, kind, n, d, size, med, sig)
+                for test, count in zip(config.COLORS, counts):
+                    rows.append(dict(forma=shape, n=n, d=d, teste=test, taxa_rejeicao=count / size,
+                                     rejeicoes=count, repeticoes=size, alpha=config.ALPHA, semente=seed))
+    return pd.DataFrame(rows)
+
+
 if __name__ == "__main__":
     df = run_all()
     df.to_csv(config.RESULTS_CSV, index=False)
     print(df.pivot_table(index=["situacao", "d"], columns="teste", values="taxa_rejeicao").round(3))
+    sens = run_sample_sizes()
+    sens.to_csv(config.SENSITIVITY_CSV, index=False)
+    print(sens.pivot_table(index=["forma", "n", "d"], columns="teste", values="taxa_rejeicao").round(3))

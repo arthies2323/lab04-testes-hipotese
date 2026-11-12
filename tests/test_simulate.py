@@ -99,3 +99,84 @@ def test_generated_parameters_match_calibration():
     mu, sd = simulate.normal_moments(27.0, 1.24)
     x, _ = simulate.generate(rng, "normal", 30, 0.0, 4000, 27.0, 1.24)
     assert abs(x.mean() / mu - 1) < 0.02 and abs(x.std() / sd - 1) < 0.02
+
+
+def test_run_sample_sizes_grid_and_reproducible():
+    from pandas.testing import assert_frame_equal
+    from src import config
+    sens = simulate.run_sample_sizes(size=50, seed=42, sizes=[8, 30])
+    assert_frame_equal(sens, simulate.run_sample_sizes(size=50, seed=42, sizes=[8, 30]))
+    assert len(sens) == len(simulate.SHAPES) * 2 * len(config.EFFECTS) * len(config.COLORS)
+    assert not sens.duplicated(["forma", "n", "d", "teste"]).any()
+    np.testing.assert_allclose(sens.taxa_rejeicao, sens.rejeicoes / sens.repeticoes)
+
+
+def test_stored_csvs_are_regenerated_by_the_code():
+    import pandas as pd
+    from pandas.testing import assert_frame_equal
+    from src import config
+    assert_frame_equal(pd.read_csv(config.RESULTS_CSV), simulate.run_all())
+    assert_frame_equal(pd.read_csv(config.SENSITIVITY_CSV), simulate.run_sample_sizes())
+
+
+def test_q3_results_regressions():
+    """Conclusões de Q3 exibidas no dashboard: se mudarem, o texto precisa ser revisto."""
+    import pandas as pd
+    from src import config, plots
+    res = pd.read_csv(config.RESULTS_CSV)
+    assert res.groupby(["situacao", "teste"]).d.apply(lambda d: sorted(d) == config.EFFECTS).all()
+    null = plots.type1_summary(res).set_index(["situacao", "teste"])
+    mw = null.xs("Mann-Whitney", level="teste")
+    assert ((mw.ic_inf <= config.ALPHA) & (mw.ic_sup >= config.ALPHA)).all()
+    lognormal = [s for s, spec in simulate.SITUATIONS.items() if spec["kind"] != "normal"]
+    assert (null.xs("Welch", level="teste").loc[lognormal].ic_sup < config.ALPHA).all()
+    piv = res.pivot_table(index=["situacao", "d"], columns="teste", values="taxa_rejeicao")
+    for sit in simulate.SITUATIONS:
+        curve = piv.loc[sit]
+        assert (curve.diff().dropna() > -0.01).all().all(), sit
+        strong = curve.loc[curve.index >= 0.4]
+        if sit in lognormal:
+            assert (strong["Mann-Whitney"] > strong["Welch"]).all(), sit
+        else:
+            assert (strong["Welch"] > strong["Mann-Whitney"]).all(), sit
+
+
+def test_sensitivity_regressions_and_consistency_with_main_grid():
+    import pandas as pd
+    from src import config
+    res = pd.read_csv(config.RESULTS_CSV)
+    sens = pd.read_csv(config.SENSITIVITY_CSV)
+    welch_null = sens[sens.d.eq(0) & sens.teste.eq("Welch") & sens.forma.ne("Normal")]
+    for _, g in welch_null.groupby("forma"):
+        rates = g.sort_values("n").taxa_rejeicao
+        assert rates.is_monotonic_increasing and (rates < config.ALPHA).all()
+    mw_null = sens[sens.d.eq(0) & sens.teste.eq("Mann-Whitney")].taxa_rejeicao
+    assert mw_null.between(0.035, 0.06).all()
+    power = sens[sens.d.gt(0)].sort_values("n").groupby(["forma", "d", "teste"]).taxa_rejeicao
+    assert power.apply(lambda r: (r.diff().dropna() > -0.01).all()).all()
+    # Pontos em comum com a grade principal: fluxos aleatórios distintos, iguais dentro do erro de Monte Carlo.
+    for sit, spec in simulate.SITUATIONS.items():
+        shared = sens[sens.forma.eq(simulate.SHAPES[spec["kind"]]) & sens.n.eq(spec["n"])]
+        merged = res[res.situacao.eq(sit)].merge(shared, on=["d", "teste"], suffixes=("", "_n"))
+        assert len(merged) == len(config.EFFECTS) * len(config.COLORS)
+        p = (merged.taxa_rejeicao + merged.taxa_rejeicao_n) / 2
+        se = np.sqrt(2 * p * (1 - p) / config.N_SIM)
+        assert ((merged.taxa_rejeicao - merged.taxa_rejeicao_n).abs() <= 4 * se + 1e-9).all(), sit
+
+
+def test_q3_comparison_and_readings():
+    import pandas as pd
+    from src import config, plots
+    res = pd.read_csv(config.RESULTS_CSV)
+    delta = plots.q3_comparison(res)
+    assert simulate.REFERENCE not in delta.index.get_level_values("situacao")
+    assert list(delta.columns) == config.EFFECTS
+    piv = 100 * res.pivot_table(index=["situacao", "teste"], columns="d", values="taxa_rejeicao")
+    for (sit, test), row in delta.iterrows():
+        np.testing.assert_allclose(row, piv.loc[(sit, test)] - piv.loc[(simulate.REFERENCE, test)])
+    assert len(plots.q3_reading(res)) == len(simulate.SITUATIONS) - 1
+    sens = pd.read_csv(config.SENSITIVITY_CSV)
+    fig = plots.sample_size_figure(sens, 0.6)
+    assert len(fig.data) == len(simulate.SHAPES) * len(config.COLORS) * 2
+    assert {t.line.color for t in fig.data} == set(config.COLORS.values())
+    assert len(plots.sample_size_reading(sens, 0.6)) == len(simulate.SHAPES)
