@@ -1,4 +1,5 @@
-"""Figuras G3-G4 (Plotly) e tabela de dados reais. Cor fixa por teste.
+"""Figuras G3-G4 e de sensibilidade de Q3 (Plotly), leituras dos resultados e tabela de dados reais.
+Cor fixa por teste.
 G1 e G2 ficam em sprint01_plots, usados pelos dois dashboards."""
 import numpy as np
 import pandas as pd
@@ -6,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from scipy import stats
 
-from . import config
+from . import config, simulate
 
 C = config.COLORS
 
@@ -88,6 +89,69 @@ def g4_reading(res, min_gap=0.02):
         else:
             txt += "; empate prático (diferença abaixo de 2 p.p.)"
         out.append(txt)
+    return out
+
+
+def q3_comparison(res):
+    """Q3: variação (p.p.) da taxa de rejeição de cada situação em relação à referência, por teste
+    e na mesma grade de d (d = 0 é o erro tipo I; d > 0, o poder)."""
+    piv = 100 * res.pivot_table(index=["situacao", "teste"], columns="d", values="taxa_rejeicao", sort=False)
+    ref = piv.xs(simulate.REFERENCE, level="situacao")
+    return piv.drop(index=simulate.REFERENCE, level="situacao").sub(ref, level="teste")
+
+
+def q3_reading(res):
+    """Leitura de Q3 derivada de q3_comparison: mudança no erro tipo I e a maior mudança de poder."""
+    out = []
+    for sit, g in q3_comparison(res).groupby(level="situacao", sort=False):
+        parts = []
+        for (_, test), row in g.iterrows():
+            power = row.drop(0.0)
+            d = power.abs().idxmax()
+            parts.append(f"{test} {row[0.0]:+.1f} p.p. no erro tipo I e {power[d]:+.1f} p.p. de poder em d = {d:g}")
+        out.append(f"{sit}: " + "; ".join(parts))
+    return out
+
+
+def sample_size_figure(sens, d_ref):
+    """Q3: erro tipo I (d = 0, tracejado) e poder (d = d_ref, contínuo) × n por grupo, por forma."""
+    shapes = list(sens.forma.unique())
+    alpha = 100 * sens.alpha.iloc[0]
+    fig = make_subplots(1, len(shapes), subplot_titles=shapes, shared_yaxes=True)
+    for i, shape in enumerate(shapes, 1):
+        for teste, color in C.items():
+            for d, dash, what in ((0.0, "dash", "erro tipo I (d = 0)"), (d_ref, "solid", f"poder (d = {d_ref:g})")):
+                s = sens[sens.forma.eq(shape) & sens.teste.eq(teste) & np.isclose(sens.d, d)].sort_values("n")
+                fig.add_scatter(x=s.n, y=100 * s.taxa_rejeicao, mode="lines+markers", name=f"{teste}: {what}",
+                                line=dict(color=color, dash=dash), legendgroup=f"{teste}-{d}", showlegend=i == 1,
+                                hovertemplate="n = %{x}<br>Rejeições: %{y:.1f}%<extra>" + teste + "</extra>",
+                                row=1, col=i)
+        fig.add_hline(y=alpha, line_dash="dash", line_color="black", row=1, col=i,
+                      annotation_text=f"α = {alpha:.0f}%" if i == 1 else None)
+        fig.add_hline(y=80, line_dash="dot", line_color="gray", row=1, col=i,
+                      annotation_text="80% de poder" if i == 1 else None)
+    fig.update_xaxes(title_text="Tamanho da amostra (PRs por grupo)", type="log", tickvals=sorted(sens.n.unique()))
+    fig.update_yaxes(title_text="Rejeições de H0 (%)", range=[0, 100])
+    fig.update_layout(title=f"Q3 — Sensibilidade ao tamanho da amostra: erro tipo I e poder (d = {d_ref:g})",
+                      height=480, legend=dict(orientation="h", y=-0.3))
+    return fig
+
+
+def sample_size_reading(sens, d_ref, target=0.8):
+    """Por forma: erro tipo I no menor e no maior n, e o menor n da grade com poder ≥ 80% em d_ref."""
+    out = []
+    for shape, g in sens.groupby("forma", sort=False):
+        parts = []
+        for test in C:
+            t = g[g.teste.eq(test)]
+            null = t[t.d.eq(0)].sort_values("n")
+            power = t[np.isclose(t.d, d_ref)].sort_values("n")
+            reach = power.loc[power.taxa_rejeicao.ge(target), "n"]
+            n80 = (f"{target:.0%} de poder a partir de n = {reach.iloc[0]}" if len(reach) else
+                   f"não chega a {target:.0%} até n = {power.n.iloc[-1]} ({100 * power.taxa_rejeicao.iloc[-1]:.0f}%)")
+            parts.append(f"{test}: erro tipo I de {100 * null.taxa_rejeicao.iloc[0]:.1f}% (n = {null.n.iloc[0]}) "
+                         f"a {100 * null.taxa_rejeicao.iloc[-1]:.1f}% (n = {null.n.iloc[-1]}); {n80}")
+        out.append(f"**{shape}**: " + "; ".join(parts))
     return out
 
 

@@ -1,0 +1,145 @@
+forma,n,d,teste,taxa_rejeicao,rejeicoes,repeticoes,alpha,semente
+Normal,8,0.0,Welch,0.0457,457,10000,0.05,42
+Normal,8,0.0,Mann-Whitney,0.05,500,10000,0.05,42
+Normal,8,0.2,Welch,0.0619,619,10000,0.05,42
+Normal,8,0.2,Mann-Whitney,0.0634,634,10000,0.05,42
+Normal,8,0.4,Welch,0.1137,1137,10000,0.05,42
+Normal,8,0.4,Mann-Whitney,0.1113,1113,10000,0.05,42
+Normal,8,0.6,Welch,0.1902,1902,10000,0.05,42
+Normal,8,0.6,Mann-Whitney,0.1897,1897,10000,0.05,42
+Normal,8,0.8,Welch,0.3161,3161,10000,0.05,42
+Normal,8,0.8,Mann-Whitney,0.3133,3133,10000,0.05,42
+Normal,8,1.0,Welch,0.4591,4591,10000,0.05,42
+Normal,8,1.0,Mann-Whitney,0.4455,4455,10000,0.05,42
+Normal,15,0.0,Welch,0.0484,484,10000,0.05,42
+Normal,15,0.0,Mann-Whitney,0.0441,441,10000,0.05,42
+Normal,15,0.2,Welch,0.0814,814,10000,0.05,42
+Normal,15,0.2,Mann-Whitney,0.0726,726,10000,0.05,42
+Normal,15,0.4,Welch,0.1798,1798,10000,0.05,42
+Normal,15,0.4,Mann-Whitney,0.1644,1644,10000,0.05,42
+Normal,15,0.6,Welch,0.353,3530,10000,0.05,42
+Normal,15,0.6,Mann-Whitney,0.325,3250,10000,0.05,42
+Normal,15,0.8,Welch,0.5565,5565,10000,0.05,42
+Normal,15,0.8,Mann-Whitney,0.5152,5152,10000,0.05,42
+Normal,15,1.0,Welch,0.7516,7516,10000,0.05,42
+Normal,15,1.0,Mann-Whitney,0.7133,7133,10000,0.05,42
+Normal,30,0.0,Welch,0.0484,484,10000,0.05,42
+Normal,30,0.0,Mann-Whitney,0.0466,466,10000,0.05,42
+Normal,30,0.2,Welch,0.1182,1182,10000,0.05,42
+Normal,30,0.2,Mann-Whitney,0.1125,1125,10000,0.05,42
+Normal,30,0.4,Welch,0.3276,3276,10000,0.05,42
+Normal,30,0.4,Mann-Whitney,0.3114,3114,10000,0.05,42
+Normal,30,0.6,Welch,0.6273,6273,10000,0.05,42
+Normal,30,0.6,Mann-Whitney,0.5976,5976,10000,0.05,42
+Normal,30,0.8,Welch,0.8608,8608,10000,0.05,42
+Normal,30,0.8,Mann-Whitney,0.8398,8398,10000,0.05,42
+Normal,30,1.0,Welch,0.9683,9683,10000,0.05,42
+Normal,30,1.0,Mann-Whitney,0.9604,9604,10000,0.05,42
+Normal,60,0.0,Welch,0.0506,506,10000,0.05,42
+Normal,60,0.0,Mann-Whitney,0.0505,505,10000,0.05,42
+Normal,60,0.2,Welch,0.1925,1925,10000,0.05,42
+Normal,60,0.2,Mann-Whitney,0.1842,1842,10000,0.05,42
+Normal,60,0.4,Welch,0.5857,5857,10000,0.05,42
+Normal,60,0.4,Mann-Whitney,0.5612,5612,10000,0.05,42
+Normal,60,0.6,Welch,0.9019,9019,10000,0.05,42
+Normal,60,0.6,Mann-Whitney,0.8874,8874,10000,0.05,42
+Normal,60,0.8,Welch,0.9917,9917,10000,0.05,42
+Normal,60,0.8,Mann-Whitney,0.989,9890,10000,0.05,42
+Normal,60,1.0,Welch,0.9998,9998,10000,0.05,42
+Normal,60,1.0,Mann-Whitney,0.9995,9995,10000,0.05,42
+Lognormal,8,0.0,Welch,0.0211,211,10000,0.05,42
+Lognormal,8,0.0,Mann-Whitney,0.0507,507,10000,0.05,42
+Lognormal,8,0.2,Welch,0.0279,279,10000,0.05,42
+Lognormal,8,0.2,Mann-Whitney,0.0639,639,10000,0.05,42
+Lognormal,8,0.4,Welch,0.0388,388,10000,0.05,42
+Lognormal,8,0.4,Mann-Whitney,0.1074,1074,10000,0.05,42
+Lognormal,8,0.6,Welch,0.0753,753,10000,0.05,42
+Lognormal,8,0.6,Mann-Whitney,0.1875,1875,10000,0.05,42
+Lognormal,8,0.8,Welch,0.1198,1198,10000,0.05,42
+Lognormal,8,0.8,Mann-Whitney,0.3008,3008,10000,0.05,42
+Lognormal,8,1.0,Welch,0.1767,1767,10000,0.05,42
+Lognormal,8,1.0,Mann-Whitney,0.4396,4396,10000,0.05,42
+Lognormal,15,0.0,Welch,0.0266,266,10000,0.05,42
+Lognormal,15,0.0,Mann-Whitney,0.0464,464,10000,0.05,42
+Lognormal,15,0.2,Welch,0.0432,432,10000,0.05,42
+Lognormal,15,0.2,Mann-Whitney,0.0748,748,10000,0.05,42
+Lognormal,15,0.4,Welch,0.0876,876,10000,0.05,42
+Lognormal,15,0.4,Mann-Whitney,0.1645,1645,10000,0.05,42
+Lognormal,15,0.6,Welch,0.1671,1671,10000,0.05,42
+Lognormal,15,0.6,Mann-Whitney,0.3219,3219,10000,0.05,42
+Lognormal,15,0.8,Welch,0.2881,2881,10000,0.05,42
+Lognormal,15,0.8,Mann-Whitney,0.5167,5167,10000,0.05,42
+Lognormal,15,1.0,Welch,0.4238,4238,10000,0.05,42
+Lognormal,15,1.0,Mann-Whitney,0.7192,7192,10000,0.05,42
+Lognormal,30,0.0,Welch,0.0307,307,10000,0.05,42
+Lognormal,30,0.0,Mann-Whitney,0.0473,473,10000,0.05,42
+Lognormal,30,0.2,Welch,0.0699,699,10000,0.05,42
+Lognormal,30,0.2,Mann-Whitney,0.113,1130,10000,0.05,42
+Lognormal,30,0.4,Welch,0.1893,1893,10000,0.05,42
+Lognormal,30,0.4,Mann-Whitney,0.3146,3146,10000,0.05,42
+Lognormal,30,0.6,Welch,0.3718,3718,10000,0.05,42
+Lognormal,30,0.6,Mann-Whitney,0.6044,6044,10000,0.05,42
+Lognormal,30,0.8,Welch,0.5737,5737,10000,0.05,42
+Lognormal,30,0.8,Mann-Whitney,0.8411,8411,10000,0.05,42
+Lognormal,30,1.0,Welch,0.7571,7571,10000,0.05,42
+Lognormal,30,1.0,Mann-Whitney,0.9553,9553,10000,0.05,42
+Lognormal,60,0.0,Welch,0.0379,379,10000,0.05,42
+Lognormal,60,0.0,Mann-Whitney,0.0538,538,10000,0.05,42
+Lognormal,60,0.2,Welch,0.1167,1167,10000,0.05,42
+Lognormal,60,0.2,Mann-Whitney,0.1898,1898,10000,0.05,42
+Lognormal,60,0.4,Welch,0.3447,3447,10000,0.05,42
+Lognormal,60,0.4,Mann-Whitney,0.5626,5626,10000,0.05,42
+Lognormal,60,0.6,Welch,0.6364,6364,10000,0.05,42
+Lognormal,60,0.6,Mann-Whitney,0.885,8850,10000,0.05,42
+Lognormal,60,0.8,Welch,0.8567,8567,10000,0.05,42
+Lognormal,60,0.8,Mann-Whitney,0.9887,9887,10000,0.05,42
+Lognormal,60,1.0,Welch,0.9431,9431,10000,0.05,42
+Lognormal,60,1.0,Mann-Whitney,0.9999,9999,10000,0.05,42
+Lognormal com outliers,8,0.0,Welch,0.0131,131,10000,0.05,42
+Lognormal com outliers,8,0.0,Mann-Whitney,0.047,470,10000,0.05,42
+Lognormal com outliers,8,0.2,Welch,0.0145,145,10000,0.05,42
+Lognormal com outliers,8,0.2,Mann-Whitney,0.0658,658,10000,0.05,42
+Lognormal com outliers,8,0.4,Welch,0.0239,239,10000,0.05,42
+Lognormal com outliers,8,0.4,Mann-Whitney,0.0983,983,10000,0.05,42
+Lognormal com outliers,8,0.6,Welch,0.0419,419,10000,0.05,42
+Lognormal com outliers,8,0.6,Mann-Whitney,0.1609,1609,10000,0.05,42
+Lognormal com outliers,8,0.8,Welch,0.0608,608,10000,0.05,42
+Lognormal com outliers,8,0.8,Mann-Whitney,0.2545,2545,10000,0.05,42
+Lognormal com outliers,8,1.0,Welch,0.0912,912,10000,0.05,42
+Lognormal com outliers,8,1.0,Mann-Whitney,0.3688,3688,10000,0.05,42
+Lognormal com outliers,15,0.0,Welch,0.0155,155,10000,0.05,42
+Lognormal com outliers,15,0.0,Mann-Whitney,0.0428,428,10000,0.05,42
+Lognormal com outliers,15,0.2,Welch,0.0237,237,10000,0.05,42
+Lognormal com outliers,15,0.2,Mann-Whitney,0.0676,676,10000,0.05,42
+Lognormal com outliers,15,0.4,Welch,0.0463,463,10000,0.05,42
+Lognormal com outliers,15,0.4,Mann-Whitney,0.138,1380,10000,0.05,42
+Lognormal com outliers,15,0.6,Welch,0.0775,775,10000,0.05,42
+Lognormal com outliers,15,0.6,Mann-Whitney,0.2671,2671,10000,0.05,42
+Lognormal com outliers,15,0.8,Welch,0.1249,1249,10000,0.05,42
+Lognormal com outliers,15,0.8,Mann-Whitney,0.4348,4348,10000,0.05,42
+Lognormal com outliers,15,1.0,Welch,0.2,2000,10000,0.05,42
+Lognormal com outliers,15,1.0,Mann-Whitney,0.6136,6136,10000,0.05,42
+Lognormal com outliers,30,0.0,Welch,0.024,240,10000,0.05,42
+Lognormal com outliers,30,0.0,Mann-Whitney,0.0488,488,10000,0.05,42
+Lognormal com outliers,30,0.2,Welch,0.0374,374,10000,0.05,42
+Lognormal com outliers,30,0.2,Mann-Whitney,0.0961,961,10000,0.05,42
+Lognormal com outliers,30,0.4,Welch,0.0851,851,10000,0.05,42
+Lognormal com outliers,30,0.4,Mann-Whitney,0.264,2640,10000,0.05,42
+Lognormal com outliers,30,0.6,Welch,0.1531,1531,10000,0.05,42
+Lognormal com outliers,30,0.6,Mann-Whitney,0.5053,5053,10000,0.05,42
+Lognormal com outliers,30,0.8,Welch,0.2645,2645,10000,0.05,42
+Lognormal com outliers,30,0.8,Mann-Whitney,0.7533,7533,10000,0.05,42
+Lognormal com outliers,30,1.0,Welch,0.3823,3823,10000,0.05,42
+Lognormal com outliers,30,1.0,Mann-Whitney,0.9062,9062,10000,0.05,42
+Lognormal com outliers,60,0.0,Welch,0.0286,286,10000,0.05,42
+Lognormal com outliers,60,0.0,Mann-Whitney,0.0496,496,10000,0.05,42
+Lognormal com outliers,60,0.2,Welch,0.0579,579,10000,0.05,42
+Lognormal com outliers,60,0.2,Mann-Whitney,0.1572,1572,10000,0.05,42
+Lognormal com outliers,60,0.4,Welch,0.1493,1493,10000,0.05,42
+Lognormal com outliers,60,0.4,Mann-Whitney,0.4765,4765,10000,0.05,42
+Lognormal com outliers,60,0.6,Welch,0.2892,2892,10000,0.05,42
+Lognormal com outliers,60,0.6,Mann-Whitney,0.8132,8132,10000,0.05,42
+Lognormal com outliers,60,0.8,Welch,0.4711,4711,10000,0.05,42
+Lognormal com outliers,60,0.8,Mann-Whitney,0.9668,9668,10000,0.05,42
+Lognormal com outliers,60,1.0,Welch,0.6174,6174,10000,0.05,42
+Lognormal com outliers,60,1.0,Mann-Whitney,0.997,9970,10000,0.05,42

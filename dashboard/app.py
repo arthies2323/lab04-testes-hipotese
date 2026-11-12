@@ -27,9 +27,17 @@ def load_simulation_results(path, revision):
     return simulate.run_all()
 
 
+@st.cache_data
+def load_sensitivity(path, revision):
+    path = Path(path)
+    return pd.read_csv(path) if path.exists() else simulate.run_sample_sizes()
+
+
 results_path = Path(config.RESULTS_CSV)
 revision = results_path.stat().st_mtime_ns if results_path.exists() else None
 res = load_simulation_results(str(results_path), revision)
+sens_path = Path(config.SENSITIVITY_CSV)
+sens = load_sensitivity(str(sens_path), sens_path.stat().st_mtime_ns if sens_path.exists() else None)
 piv = res.pivot_table(index=["situacao", "d"], columns="teste", values="taxa_rejeicao")
 
 st.title("Testes de hipótese por dentro: Welch × Mann-Whitney")
@@ -72,6 +80,25 @@ sob H₀, de uma estatística tão ou mais extrema que a observada. Não é a pr
 """)
 
 st.header("4. Erro tipo I")
+st.subheader("Situações simuladas (Q1–Q3)")
+st.table(simulate.scenario_table(med, sig).rename(columns={
+    "situacao": "Situação", "violacao": "Pressuposto do Welch violado",
+    "alterado": "Parâmetro alterado (vs. referência)", "fixos": "Parâmetros fixos"}).set_index("Situação"))
+checks = simulate.scenario_checks(med, sig, size=4_000)
+ref_skew = checks.set_index("situacao").loc[simulate.REFERENCE, "assimetria_tipica"]
+st.dataframe(checks.rename(columns={
+    "situacao": "Situação", "n": "n por grupo", "assimetria_tipica": "Assimetria típica de uma amostra",
+    "razao_medias_h0": "Média b ÷ média a (H₀)", "correlacao_grupos": "Correlação entre grupos"}).round(3),
+    hide_index=True, width="stretch")
+st.markdown(
+    f"Cada situação muda um único aspecto da referência **{simulate.REFERENCE}**; em todas, a grade de d, "
+    f"α = {config.ALPHA}, {f'{config.N_SIM:_}'.replace('_', '.')} réplicas e a semente {config.SEED} ficam fixas. "
+    "A conferência acima gera 4.000 réplicas sob H₀: a contaminação atinge os dois grupos igualmente (razão das "
+    f"médias entre {checks.razao_medias_h0.min():.2f} e {checks.razao_medias_h0.max():.2f}) e os grupos são "
+    f"independentes (|correlação| ≤ {checks.correlacao_grupos.abs().max():.3f}). A assimetria típica de uma amostra "
+    f"simulada da referência ({ref_skew:.2f}) é comparável à dos dados reais "
+    f"({desc.assimetria.min():.2f} e {desc.assimetria.max():.2f}).")
+st.subheader("G3 — Erro tipo I por situação")
 st.plotly_chart(plots.g3(res), width="stretch")
 null = plots.type1_summary(res)
 alpha = null.alpha.iloc[0]
@@ -111,6 +138,41 @@ Com dados assimétricos o Mann-Whitney detecta muito mais: com d = 0,8 e n=30 el
 A vantagem **muda de lado** com dados normais, onde o Welch ganha por pouco
 ({p.loc['Normal, bem comportada (n=30)','Welch']*100:.0f}% contra {p.loc['Normal, bem comportada (n=30)','Mann-Whitney']*100:.0f}%).
 Com n=8 os dois têm pouco poder, mas o Mann-Whitney segue à frente.
+""")
+
+st.subheader("Q3: efeito de outliers e de n pequeno (mesma grade de d)")
+delta = plots.q3_comparison(res)
+delta.columns = [f"d = {d:g}" + (" (erro tipo I)" if d == 0 else "") for d in delta.columns]
+st.dataframe(delta.round(1), width="stretch")
+st.markdown(f"Cada célula é a taxa de rejeição da situação menos a da referência **{simulate.REFERENCE}**, em pontos "
+            "percentuais, para o mesmo teste e o mesmo d. Valores negativos em d > 0 indicam perda de poder.")
+for _t in plots.q3_reading(res):
+    st.markdown(f"- {_t}")
+
+st.subheader("Q3: sensibilidade ao tamanho da amostra")
+d_ref = st.select_slider("Efeito usado nas curvas de poder (d)", options=config.EFFECTS[1:], value=0.6)
+st.plotly_chart(plots.sample_size_figure(sens, d_ref), width="stretch")
+st.markdown(f"Cada forma foi simulada com n = {', '.join(map(str, config.SAMPLE_SIZES))} PRs por grupo, a mesma grade "
+            "de d e 10.000 réplicas por ponto. As linhas tracejadas são o erro tipo I (d = 0) e as contínuas, o poder no "
+            "d escolhido acima.")
+for _t in plots.sample_size_reading(sens, d_ref):
+    st.markdown(f"- {_t}")
+with st.expander("Limites da comparação de Q3"):
+    mu, sd = simulate.normal_moments(med, sig)
+    st.markdown(f"""
+- **O mesmo d não é o mesmo efeito em horas.** Na lognormal, d desloca o log em d·σ (σ = {sig:.2f}), ou seja, a
+  mediana do grupo b fica exp(d·σ) vezes a do grupo a; na normal, o deslocamento é de d desvios-padrão em horas. Com
+  outliers, a contaminação aumenta a dispersão sem mudar o deslocamento, então o mesmo d vira um efeito padronizado menor.
+- **A normal de controle não é realista:** com média {mu:.1f} h e DP {sd:.1f} h, {stats.norm.cdf(0, mu, sd):.0%} dos
+  tempos gerados são negativos. Ela isola o efeito da forma, mas não descreve PRs reais.
+- **Uma só intensidade de contaminação** ({config.CONTAM_FRAC:.0%} × {config.CONTAM_MULT:g}, nos dois grupos) e grupos
+  balanceados com o mesmo σ: não foram simulados outliers em um só grupo, variâncias diferentes nem n desiguais.
+- **Mann-Whitney com n ≤ 8** usa p-valor exato (discreto) no SciPy e, acima disso, a aproximação normal: a comparação
+  entre tamanhos de amostra mistura o efeito do n e o do método.
+- **Erro de Monte Carlo:** com 10.000 réplicas, a margem de 95% é de ≈ ±0,4 p.p. perto de 5% e ≈ ±1 p.p. perto de 50%.
+  A grade de n usa outro fluxo aleatório, então os pontos em comum com G3/G4 (ex.: lognormal com n = 30) diferem
+  dentro dessa margem.
+- **Independência:** as réplicas supõem PRs independentes; dependência entre PRs do mesmo autor não foi simulada.
 """)
 
 st.header("6. Dados reais")
