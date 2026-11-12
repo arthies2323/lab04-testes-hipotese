@@ -91,6 +91,17 @@ st.markdown(f"Sob H₀, a linha em {alpha:.0%} é o nível nominal e as barras d
 
 st.header("5. Poder")
 st.plotly_chart(plots.g4(res), width="stretch")
+st.markdown("**Escala do efeito (Q2).** O poder é a taxa de rejeição de H₀ quando há efeito (d > 0); em d = 0 a mesma "
+            "curva é o erro tipo I. O d é um deslocamento padronizado: na normal, o grupo b fica d desvios-padrão acima "
+            "(em horas); na lognormal, o deslocamento é d·σ na escala log, ou seja, a mediana de b é exp(d·σ) vezes a de a.")
+_scale = simulate.effect_scale_table(med, sig).rename(columns={
+    "d": "d", "normal_deslocamento_h": "Normal: deslocamento (h)",
+    "lognormal_deslocamento_log": "Lognormal: deslocamento no log",
+    "lognormal_razao_medianas": "Lognormal: razão das medianas"})
+st.dataframe(_scale.round(2), hide_index=True, width="stretch")
+st.markdown("**Leitura das curvas (derivada dos resultados):**")
+for _t in plots.g4_reading(res):
+    st.markdown(f"- {_t}")
 p = piv.xs(0.8, level="d")
 st.markdown(f"""
 Com dados assimétricos o Mann-Whitney detecta muito mais: com d = 0,8 e n=30 ele rejeita
