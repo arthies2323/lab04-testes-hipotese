@@ -44,7 +44,9 @@ de Q3 com a referência e a sensibilidade ao tamanho da amostra, com os limites 
 
 ## Entrega final — dashboard
 
-`streamlit run dashboard/app.py` abre as 7 seções na ordem pedida. Se os CSVs de `data/` não existirem,
+`streamlit run dashboard/app.py` abre um painel de tela única, sem rolagem: KPIs no topo e as seções na ordem
+pedida como páginas (Dados, Mecânica dos testes, Erro tipo I, Poder, Q3, Dados reais e conclusão). O cenário fica no
+botão **ℹ Cenário** e a interpretação de cada página no botão **ℹ Leitura**. Se os CSVs de `data/` não existirem,
 o dashboard os regenera com a mesma semente. A seção 6 lê o efeito real na escala do G4 (log, em σ)
 para estimar o poder com a amostra coletada e o n necessário para 80% de poder.
 

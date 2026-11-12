@@ -61,9 +61,9 @@ def g4(res):
                             hovertemplate="d = %{x}<br>Rejeições: %{y:.1f}%<extra>" + teste + "</extra>",
                             row=r, col=c)
         fig.add_hline(y=alpha, line_dash="dash", line_color="black", row=r, col=c,
-                      annotation_text=f"α = {alpha:.0f}% (d = 0)" if i == 0 else None)
+                      **(dict(annotation_text=f"α = {alpha:.0f}% (d = 0)") if i == 0 else {}))
         fig.add_hline(y=80, line_dash="dot", line_color="gray", row=r, col=c,
-                      annotation_text="80% de poder" if i == 0 else None)
+                      **(dict(annotation_text="80% de poder") if i == 0 else {}))
     fig.update_xaxes(title_text="Tamanho do efeito d (desvios-padrão)")
     fig.update_yaxes(title_text="Rejeições de H0 (%)", range=[0, 100])
     fig.update_layout(title="G4 — Curvas de poder: Welch × Mann-Whitney (Q2 e Q3)", autosize=True,
@@ -127,9 +127,9 @@ def sample_size_figure(sens, d_ref):
                                 hovertemplate="n = %{x}<br>Rejeições: %{y:.1f}%<extra>" + teste + "</extra>",
                                 row=1, col=i)
         fig.add_hline(y=alpha, line_dash="dash", line_color="black", row=1, col=i,
-                      annotation_text=f"α = {alpha:.0f}%" if i == 1 else None)
+                      **(dict(annotation_text=f"α = {alpha:.0f}%") if i == 1 else {}))
         fig.add_hline(y=80, line_dash="dot", line_color="gray", row=1, col=i,
-                      annotation_text="80% de poder" if i == 1 else None)
+                      **(dict(annotation_text="80% de poder") if i == 1 else {}))
     fig.update_xaxes(title_text="Tamanho da amostra (PRs por grupo)", type="log", tickvals=sorted(sens.n.unique()))
     fig.update_yaxes(title_text="Rejeições de H0 (%)", range=[0, 100])
     fig.update_layout(title=f"Q3 — Sensibilidade ao tamanho da amostra: erro tipo I e poder (d = {d_ref:g})",

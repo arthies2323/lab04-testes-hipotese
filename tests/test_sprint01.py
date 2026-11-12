@@ -138,8 +138,13 @@ def test_full_dashboard_uses_s01_g1_g2(monkeypatch):
         monkeypatch.setattr(sprint01_plots, name, spy)
     app = AppTest.from_file(str(sprint01.ROOT/'dashboard'/'app.py')).run(timeout=60)
     assert not app.exception
+    # Painel com páginas: G1 fica na página inicial ("Dados") e G2 em "Mecânica dos testes".
+    app.get('button_group')[0].set_value('Mecânica dos testes').run(timeout=60)
+    assert not app.exception
     assert [name for name, _ in calls] == ['g1', 'g2']
     expected = sprint01.example(sprint01.load_real())
     for _, sample in calls:
         pd.testing.assert_frame_equal(sample, expected)
-    assert len(app.header) == 7
+    for page in ('Erro tipo I', 'Poder', 'Q3 — outliers e n', 'Dados reais e conclusão'):
+        app.get('button_group')[0].set_value(page).run(timeout=60)
+        assert not app.exception, page
